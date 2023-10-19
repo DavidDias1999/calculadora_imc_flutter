@@ -1,6 +1,8 @@
+import 'package:calculadora_imc/main.dart';
 import 'package:calculadora_imc/utils/calculo_imc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 void main() {
   runApp(const MaterialApp(
@@ -10,7 +12,7 @@ void main() {
 }
 
 class CalculadoraImc extends StatefulWidget {
-  const CalculadoraImc({Key? key}) : super(key: key);
+  const CalculadoraImc({super.key});
 
   @override
   State<CalculadoraImc> createState() => _CalculadoraImcState();
@@ -116,7 +118,10 @@ class _CalculadoraImcState extends State<CalculadoraImc> {
                   classificacao = "obesidade grau III (mórbida)";
                 }
                 String data =
-                    'Altura: $altura metros,\nPeso: $peso Kg,\nIMC: $resultadoNum,\nSua classificação é: $classificacao';
+                    'Altura: $altura metros;\nPeso: $peso kg;\nIMC: $resultadoNum;\nSua classificação é: $classificacao.';
+
+                final userBox = Hive.box<Data>('imcDataBox');
+                userBox.add(Data(data));
                 setState(() {
                   userData.add(data);
                 });
@@ -127,22 +132,30 @@ class _CalculadoraImcState extends State<CalculadoraImc> {
             child: const Icon(Icons.add),
           ),
           Expanded(
-            child: ListView.builder(
-                itemCount: userData.length,
-                itemBuilder: (context, index) {
-                  return Container(
-                    decoration: BoxDecoration(
-                        color: Colors.blueGrey,
-                        borderRadius: BorderRadius.circular(10)),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-                    margin: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 10),
-                    child: Text(userData[index],
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w400, fontSize: 16)),
-                  );
-                }),
+            child: ValueListenableBuilder(
+              valueListenable: Hive.box<Data>('imcDataBox').listenable(),
+              builder: (context, box, child) {
+                final userData = box.values.toList().cast<Data>();
+
+                return ListView.builder(
+                  itemCount: userData.length,
+                  itemBuilder: (context, index) {
+                    return Container(
+                      decoration: BoxDecoration(
+                          color: Colors.blueGrey,
+                          borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 5, vertical: 5),
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 10),
+                      child: Text(userData[index].data,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w400, fontSize: 16)),
+                    );
+                  },
+                );
+              },
+            ),
           )
         ],
       ),
